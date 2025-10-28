@@ -156,6 +156,11 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
+        .incorrect-feedback {
+            color: #ef4444;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
         .progress-bar {
             width: 100%;
             height: 25px;
@@ -252,6 +257,13 @@
             margin-top: 10px;
             font-weight: bold;
         }
+
+        .enter-hint {
+            color: #ffd23f;
+            font-size: 1rem;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
     </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
@@ -305,6 +317,9 @@
     <div class="typing-word" id="current-word">
      PUMPKIN
     </div><input type="text" class="typing-input" id="typing-input" placeholder="Type here..." autocomplete="off">
+    <div class="enter-hint" id="enter-hint" style="display: none;">
+     Press Enter when finished!
+    </div>
     <div class="feedback" id="typing-feedback"></div>
     <div class="progress-bar">
      <div class="progress-fill" id="progress-fill"></div>
@@ -375,35 +390,70 @@
 
         function setupTypingInput() {
             const input = document.getElementById('typing-input');
+            
+            // For Level 3 (sentences), use Enter key to submit
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && currentLevel === 3) {
+                    checkAnswer();
+                }
+            });
+            
+            // For Levels 1 and 2, check on each input
             input.addEventListener('input', function(e) {
-                const typed = e.target.value;
-                const target = currentLevel === 3 ? currentTypingWord : typed.toUpperCase();
-                const comparison = currentLevel === 3 ? currentTypingWord : currentTypingWord.toUpperCase();
-                
-                if (target === comparison) {
-                    const points = currentLevel * 10;
-                    typingScore += points;
-                    currentRound++;
+                if (currentLevel < 3) {
+                    const typed = e.target.value.toUpperCase();
+                    const target = currentTypingWord.toUpperCase();
                     
-                    document.getElementById('typing-score').textContent = typingScore;
-                    document.getElementById('typing-feedback').innerHTML = `🎃 Excellent! +${points} points`;
-                    document.getElementById('typing-feedback').className = 'feedback correct-feedback';
-                    e.target.value = '';
-                    
-                    updateProgress();
-                    
-                    if (currentRound > totalRounds) {
-                        setTimeout(() => {
-                            completeLevel();
-                        }, 1500);
-                    } else {
-                        setTimeout(() => {
-                            newTypingWord();
-                            document.getElementById('typing-feedback').innerHTML = '';
-                        }, 1500);
+                    if (typed === target) {
+                        checkAnswer();
                     }
                 }
             });
+        }
+
+        function checkAnswer() {
+            const input = document.getElementById('typing-input');
+            const typed = input.value.trim();
+            let isCorrect = false;
+            
+            if (currentLevel === 3) {
+                // For sentences, check exact match including punctuation and capitalization
+                isCorrect = typed === currentTypingWord;
+            } else {
+                // For words and phrases, check uppercase match
+                isCorrect = typed.toUpperCase() === currentTypingWord.toUpperCase();
+            }
+            
+            if (isCorrect) {
+                const points = currentLevel * 10;
+                typingScore += points;
+                currentRound++;
+                
+                document.getElementById('typing-score').textContent = typingScore;
+                document.getElementById('typing-feedback').innerHTML = `🎃 Excellent! +${points} points`;
+                document.getElementById('typing-feedback').className = 'feedback correct-feedback';
+                input.value = '';
+                
+                updateProgress();
+                
+                if (currentRound > totalRounds) {
+                    setTimeout(() => {
+                        completeLevel();
+                    }, 1500);
+                } else {
+                    setTimeout(() => {
+                        newTypingWord();
+                        document.getElementById('typing-feedback').innerHTML = '';
+                    }, 1500);
+                }
+            } else if (currentLevel === 3) {
+                // Only show error feedback for Level 3 (sentences)
+                document.getElementById('typing-feedback').innerHTML = '👻 Try again! Check your spelling, capitalization, and punctuation.';
+                document.getElementById('typing-feedback').className = 'feedback incorrect-feedback';
+                setTimeout(() => {
+                    document.getElementById('typing-feedback').innerHTML = '';
+                }, 2000);
+            }
         }
 
         function newTypingWord() {
@@ -423,6 +473,14 @@
             document.getElementById('current-round').textContent = currentRound;
             document.getElementById('current-level').textContent = currentLevel;
             document.getElementById('level-description').textContent = levelContent[currentLevel].name;
+            
+            // Show/hide Enter hint for Level 3
+            const enterHint = document.getElementById('enter-hint');
+            if (currentLevel === 3) {
+                enterHint.style.display = 'block';
+            } else {
+                enterHint.style.display = 'none';
+            }
         }
 
         function updateProgress() {
@@ -501,6 +559,8 @@
                 <div class="typing-word" id="current-word">PUMPKIN</div>
                 
                 <input type="text" class="typing-input" id="typing-input" placeholder="Type here..." autocomplete="off">
+                
+                <div class="enter-hint" id="enter-hint" style="display: none;">Press Enter when finished!</div>
                 
                 <div class="feedback" id="typing-feedback"></div>
                 
@@ -581,5 +641,5 @@
         // Start the game when page loads
         window.addEventListener('DOMContentLoaded', initGame);
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'995a60b5c42eb099',t:'MTc2MTY1MzkyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'995ae653b78c672e',t:'MTc2MTY1OTQwMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
